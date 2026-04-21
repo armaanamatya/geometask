@@ -1,0 +1,36 @@
+name: Auto-Fix Pipeline
+
+on:
+  repository_dispatch:
+    types: [posthog_error]
+
+jobs:
+  fix-error:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install anthropic
+        
+      - name: Run Coding Agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python agent.py "${{ github.event.client_payload.file_name }}" "${{ github.event.client_payload.error_message }}" "${{ github.event.client_payload.traceback }}"
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "AutoFix Agent"
+          git config --global user.email "autofix@agent.local"
+          git add .
+          git commit -m "Auto-fix applied for error" || echo "No changes to commit"
+          git push

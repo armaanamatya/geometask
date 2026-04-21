@@ -1,0 +1,7 @@
+create a fake app: running on temrinal acts like a browser
+
+have errors -- super easy to fix
+
+api to posthog from this browser app that will push al errors to posthog
+
+you should connect coding agent to automatically fix posthog errors when uploaded and deploy 
