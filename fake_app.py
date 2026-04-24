@@ -2,6 +2,9 @@ import os
 import time
 import traceback
 from posthog import Posthog
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # These will be set later in your environment
 POSTHOG_API_KEY = os.environ.get('POSTHOG_API_KEY', 'dummy_key')
