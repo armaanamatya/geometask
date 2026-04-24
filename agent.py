@@ -1,18 +1,18 @@
 import os
 import sys
-import anthropic
+from openai import OpenAI
 
 def fix_code(file_path, error_message, traceback):
     if not os.path.exists(file_path):
         print(f"File {file_path} does not exist.")
         sys.exit(1)
-        
+
     with open(file_path, "r") as f:
         code = f.read()
 
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    prompt = f"""You are an expert autonomous coding agent. 
+    prompt = f"""You are an expert autonomous coding agent.
 A python application crashed with the following error:
 Error Message: {error_message}
 Traceback: {traceback}
@@ -25,17 +25,16 @@ Here is the source code of the file ({file_path}):
 Write the corrected python code that fixes this error. Return ONLY the fully corrected python code, and nothing else. Do not include markdown formatting like ```python, just the raw code.
 """
 
-    print(f"Sending prompt to Claude to fix {file_path}...")
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=2000,
+    print(f"Sending prompt to OpenAI to fix {file_path}...")
+    response = client.chat.completions.create(
+        model="gpt-4o",
         temperature=0,
         messages=[
             {"role": "user", "content": prompt}
         ]
     )
-    
-    fixed_code = message.content[0].text.strip()
+
+    fixed_code = response.choices[0].message.content.strip()
     
     # Strip markdown block if model still includes it
     if fixed_code.startswith("```python"):

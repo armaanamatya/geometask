@@ -39,8 +39,8 @@ if __name__ == "__main__":
             
             # Push the error to PostHog
             posthog.capture(
-                'distinct_id_server', # Dummy ID for the server/device
-                event='browser_error', 
+                distinct_id='distinct_id_server',
+                event='browser_error',
                 properties={
                     'error_message': error_msg,
                     'traceback': tb,
