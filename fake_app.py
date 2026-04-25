@@ -15,12 +15,9 @@ posthog = Posthog(project_api_key=POSTHOG_API_KEY, host=POSTHOG_HOST)
 def run_browser_simulation():
     print("Starting browser simulation tasks...")
     # -------------------------------------------------------------
-    # INTENTIONAL BUG: An error that is "super easy to fix"
-    # We are calling a method on a NoneType object.
-    # The agent should easily recognize that my_string needs a value
-    # or that the logic is flawed.
+    # FIXED BUG: Assign a non-None value to my_string
     # -------------------------------------------------------------
-    my_string = None
+    my_string = "default string"
     print(my_string.upper())
 
 if __name__ == "__main__":
