@@ -22,15 +22,29 @@ jobs:
         run: pip install openai
 
       - name: Run Coding Agent
+        # Values are passed as env vars, never interpolated into the shell command,
+        # which prevents shell injection via attacker-controlled webhook payloads.
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FIX_FILE_NAME: ${{ github.event.client_payload.file_name }}
+          FIX_ERROR_MESSAGE: ${{ github.event.client_payload.error_message }}
+          FIX_TRACEBACK: ${{ github.event.client_payload.traceback }}
         run: |
-          python agent.py "${{ github.event.client_payload.file_name }}" "${{ github.event.client_payload.error_message }}" "${{ github.event.client_payload.traceback }}"
+          python agent.py | tee /tmp/agent_output.txt
+          # Extract which file was patched so we stage only that file
+          FIXED=$(grep '^FIXED_FILE=' /tmp/agent_output.txt | cut -d= -f2-)
+          echo "FIXED_FILE=$FIXED" >> "$GITHUB_ENV"
 
       - name: Commit and push changes
         run: |
-          git config --global user.name "AutoFix Agent"
-          git config --global user.email "autofix@agent.local"
-          git add .
-          git commit -m "Auto-fix applied for error" || echo "No changes to commit"
+          git config user.name "AutoFix Agent"
+          git config user.email "autofix@agent.local"
+          if [ -n "$FIXED_FILE" ] && [ -f "$FIXED_FILE" ]; then
+            git add "$FIXED_FILE"
+          else
+            echo "No patched file identified; nothing to commit."
+            exit 0
+          fi
+          git diff --cached --quiet && echo "No changes to commit." && exit 0
+          git commit -m "fix: auto-fix applied for error in $FIXED_FILE"
           git push
